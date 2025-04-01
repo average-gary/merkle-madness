@@ -1,7 +1,5 @@
 # March Madness Merkle Tree
 
-https://average-gary.github.io/merkle-madness/
-
 An interactive visualization of a March Madness bracket using Merkle trees. Each team's progression through the tournament is tracked using cryptographic hashes, creating a verifiable chain of winners.
 
 ## Features
@@ -28,4 +26,4 @@ An interactive visualization of a March Madness bracket using Merkle trees. Each
 
 ## Live Demo
 
-Visit the [GitHub Pages site](https://YOUR_USERNAME.github.io/merkle-madness) to try it out! 
+Visit the [GitHub Pages site](https://average-gary.github.io/merkle-madness) to try it out!
