@@ -93,6 +93,71 @@
             padding-top: 4px;
             border-top: 1px solid #ddd;
         }
+        /* Add hash color classes */
+        .hash-color-1 { color: #d32f2f; }
+        .hash-color-2 { color: #1976d2; }
+        .hash-color-3 { color: #388e3c; }
+        .hash-color-4 { color: #f57c00; }
+        .hash-color-5 { color: #7b1fa2; }
+        .hash-color-6 { color: #00796b; }
+        .hash-color-7 { color: #c2185b; }
+        .hash-color-8 { color: #3949ab; }
+        .hash-color-9 { color: #689f38; }
+        .hash-color-10 { color: #ffa000; }
+        .hash-color-11 { color: #6a1b9a; }
+        .hash-color-12 { color: #00695c; }
+        .hash-color-13 { color: #ad1457; }
+        .hash-color-14 { color: #283593; }
+        .hash-color-15 { color: #558b2f; }
+        .hash-color-16 { color: #f57f17; }
+        .hash-color-17 { color: #4a148c; }
+        .hash-color-18 { color: #004d40; }
+        .hash-color-19 { color: #880e4f; }
+        .hash-color-20 { color: #1a237e; }
+        .hash-color-21 { color: #33691e; }
+        .hash-color-22 { color: #e65100; }
+        .hash-color-23 { color: #3e1b70; }
+        .hash-color-24 { color: #00363a; }
+        .hash-color-25 { color: #4a148c; }
+        .hash-color-26 { color: #0d47a1; }
+        .hash-color-27 { color: #1b5e20; }
+        .hash-color-28 { color: #bf360c; }
+        .hash-color-29 { color: #311b92; }
+        .hash-color-30 { color: #00251a; }
+        .hash-color-31 { color: #880e4f; }
+        .hash-color-32 { color: #000051; }
+        .hash-color-33 { color: #1b5e20; }
+        .hash-color-34 { color: #bf360c; }
+        .hash-color-35 { color: #311b92; }
+        .hash-color-36 { color: #00251a; }
+        .hash-color-37 { color: #880e4f; }
+        .hash-color-38 { color: #000051; }
+        .hash-color-39 { color: #1b5e20; }
+        .hash-color-40 { color: #bf360c; }
+        .hash-color-41 { color: #311b92; }
+        .hash-color-42 { color: #00251a; }
+        .hash-color-43 { color: #880e4f; }
+        .hash-color-44 { color: #000051; }
+        .hash-color-45 { color: #1b5e20; }
+        .hash-color-46 { color: #bf360c; }
+        .hash-color-47 { color: #311b92; }
+        .hash-color-48 { color: #00251a; }
+        .hash-color-49 { color: #880e4f; }
+        .hash-color-50 { color: #000051; }
+        .hash-color-51 { color: #1b5e20; }
+        .hash-color-52 { color: #bf360c; }
+        .hash-color-53 { color: #311b92; }
+        .hash-color-54 { color: #00251a; }
+        .hash-color-55 { color: #880e4f; }
+        .hash-color-56 { color: #000051; }
+        .hash-color-57 { color: #1b5e20; }
+        .hash-color-58 { color: #bf360c; }
+        .hash-color-59 { color: #311b92; }
+        .hash-color-60 { color: #00251a; }
+        .hash-color-61 { color: #880e4f; }
+        .hash-color-62 { color: #000051; }
+        .hash-color-63 { color: #1b5e20; }
+        .hash-color-64 { color: #bf360c; }
         .root-hash {
             text-align: center;
             font-size: 1.2em;
@@ -327,6 +392,7 @@
                         const hashValue = hash(winnerName);
                         match.dataset.merkleHash = hashValue;
                         match.dataset.winner = winnerName;
+                        match.dataset.hashColor = (match.dataset.match * 2 + 1).toString(); // Assign color based on match index
                     } else {
                         // For all other levels, use previous hashes and winner
                         const leftMatch = document.querySelector(`.match[data-round="${i-1}"][data-match="${match.dataset.match * 2}"]`);
@@ -342,6 +408,15 @@
                         match.dataset.merkleHash = hashValue;
                         match.dataset.winner = winnerName;
                         
+                        // Inherit color from the winning team's previous match
+                        if (winner) {
+                            const isFirstTeam = teams[0] === winner;
+                            const previousMatch = isFirstTeam ? leftMatch : rightMatch;
+                            if (previousMatch) {
+                                match.dataset.hashColor = previousMatch.dataset.hashColor;
+                            }
+                        }
+                        
                         // Update display
                         const hashElement = match.querySelector('.merkle-hash');
                         if (!hashElement) {
@@ -350,9 +425,23 @@
                             match.appendChild(newHashElement);
                         }
                         const hashElementToUpdate = match.querySelector('.merkle-hash');
+                        
+                        // Remove all previous color classes
+                        hashElementToUpdate.classList.remove(...Array.from(hashElementToUpdate.classList)
+                            .filter(cls => cls.startsWith('hash-color-')));
+                        
+                        // Add the appropriate color class
+                        if (match.dataset.hashColor) {
+                            hashElementToUpdate.classList.add(`hash-color-${match.dataset.hashColor}`);
+                        }
+                        
+                        // Create colored input text
+                        const leftColor = leftMatch ? `hash-color-${leftMatch.dataset.hashColor}` : '';
+                        const rightColor = rightMatch ? `hash-color-${rightMatch.dataset.hashColor}` : '';
+                        
                         hashElementToUpdate.innerHTML = `
-                            <div>Hash: ${hashValue}</div>
-                            <div class="hash-details">Input: "${combinedValue}"</div>
+                            <div>Hash: <span class="${match.dataset.hashColor ? `hash-color-${match.dataset.hashColor}` : ''}">${hashValue}</span></div>
+                            <div class="hash-details">Input: "<span class="${leftColor}">${leftHash}</span><span class="${rightColor}">${rightHash}</span>${winnerName}"</div>
                         `;
                         hashElementToUpdate.classList.add('visible');
                     }
@@ -363,7 +452,7 @@
             const finalMatch = rounds[rounds.length - 1].querySelector('.match');
             if (finalMatch) {
                 const finalHash = finalMatch.dataset.merkleHash;
-                rootHash.textContent = finalHash;
+                rootHash.innerHTML = `<strong>Merkle Root:</strong> <span class="${finalMatch.dataset.hashColor ? `hash-color-${finalMatch.dataset.hashColor}` : ''}">${finalHash}</span>`;
                 console.log('Root hash updated:', finalHash); // Debug log
             }
         }
