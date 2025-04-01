@@ -9,42 +9,40 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             background-color: #f0f0f0;
             overflow-x: auto;
         }
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
         }
         .bracket-container {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
+            margin-top: 60px;
             position: relative;
         }
         .round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
-            margin: 0 20px;
+            margin: 0 10px;
             position: relative;
         }
         .match {
             background-color: white;
             border: 1px solid #ccc;
             border-radius: 5px;
-            padding: 10px;
-            margin: 5px 0;
+            padding: 8px;
+            margin: 3px 0;
             cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            min-width: 150px;
+            min-width: 120px;
         }
         .match:hover {
             background-color: #e0e0e0;
-            transform: scale(1.02);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .match.winner {
@@ -54,37 +52,25 @@
             padding: 5px;
             margin: 2px 0;
             border-radius: 3px;
-            transition: all 0.3s ease;
             position: relative;
         }
         .team-name.winner {
             background-color: #90EE90;
         }
-        .team-name.advancing {
-            animation: advanceTeam 0.5s ease forwards;
-        }
         .merkle-hash {
             font-family: monospace;
-            font-size: 1em;
+            font-size: 0.9em;
             color: #333;
-            margin-top: 8px;
+            margin-top: 4px;
             word-break: break-all;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            padding: 8px;
+            padding: 4px;
             background-color: #f8f8f8;
             border-radius: 4px;
             border: 1px solid #ddd;
         }
-        .merkle-hash.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
         .merkle-hash.changed {
             background-color: #fff3cd;
             border-color: #ffeeba;
-            animation: highlightChange 1s ease;
         }
         .hash-details {
             font-size: 0.8em;
@@ -160,90 +146,35 @@
         .hash-color-64 { color: #bf360c; }
         .root-hash {
             text-align: center;
-            font-size: 1.2em;
-            margin: 20px 0;
-            padding: 10px;
+            font-size: 1em;
+            margin: 10px 0;
+            padding: 8px;
             background-color: #fff;
             border-radius: 5px;
             word-break: break-all;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 80%;
         }
         .bracket-line {
             position: absolute;
             background-color: #666;
             z-index: -1;
             transform-origin: left center;
-            opacity: 0;
-            animation: drawLine 0.5s ease forwards;
+            opacity: 1;
         }
         .bracket-line.highlight {
             background-color: #4CAF50;
-            animation: highlightLine 0.3s ease forwards;
-        }
-        .bracket-line.advancing {
-            animation: advancingLine 0.5s ease forwards;
-        }
-        @keyframes drawLine {
-            from {
-                width: 0;
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        @keyframes highlightLine {
-            from {
-                background-color: #666;
-            }
-            to {
-                background-color: #4CAF50;
-            }
-        }
-        @keyframes advanceTeam {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.1);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-        @keyframes advancingLine {
-            0% {
-                background-color: #666;
-            }
-            50% {
-                background-color: #4CAF50;
-            }
-            100% {
-                background-color: #666;
-            }
         }
         .match-path {
-            animation: highlightPath 0.3s ease forwards;
-        }
-        @keyframes highlightPath {
-            from {
-                background-color: white;
-            }
-            to {
-                background-color: #e8f5e9;
-            }
+            background-color: #e8f5e9;
         }
         .hash-calculator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 300px;
+            display: none;
         }
         .hash-calculator h3 {
             margin-top: 0;
@@ -316,12 +247,8 @@
 <body>
     <div class="container">
         <h1>March Madness Merkle Tree</h1>
-        <div class="root-hash">
-            <strong>Merkle Root:</strong> <span id="merkle-root"></span>
-        </div>
-        <div class="bracket-container" id="bracket-container">
-            <!-- Bracket will be generated here -->
-        </div>
+        <div class="root-hash" id="rootHash"></div>
+        <div class="bracket-container" id="bracketContainer"></div>
     </div>
 
     <div class="hash-calculator">
@@ -377,7 +304,7 @@
         // Update Merkle tree hashes
         function updateMerkleTree() {
             const rounds = document.querySelectorAll('.round');
-            const rootHash = document.getElementById('merkle-root');
+            const rootHash = document.getElementById('rootHash');
             
             // Update hashes from bottom to top
             for (let i = 0; i < rounds.length; i++) {
@@ -459,9 +386,6 @@
 
         // Handle match clicks
         function handleMatchClick(event, matchDiv, round, matchIndex) {
-            // Don't allow changes to locked matches
-            if (isMatchLocked(matchDiv)) return;
-
             // Check if the click was on a team name
             const clickedTeam = event.target.closest('.team-name');
             if (!clickedTeam) return; // Click wasn't on a team name
@@ -500,36 +424,17 @@
             
             // Find the next match in the bracket
             const nextMatchDiv = document.querySelector(`.match[data-round="${nextRound}"][data-match="${nextMatch}"]`);
-            if (nextMatchDiv && !isMatchLocked(nextMatchDiv)) {
-                // Add advancing animation to winner
-                winner.classList.add('advancing');
-                
-                // Find and animate the connecting line
-                const line = document.querySelector(`.bracket-line[data-from-round="${round}"][data-from-match="${matchIndex}"]`);
-                if (line) {
-                    line.classList.add('advancing');
-                }
-
+            if (nextMatchDiv) {
                 // Update the appropriate team slot based on whether this is the first or second team
                 const isFirstTeam = matchIndex % 2 === 0;
                 const teamSlots = nextMatchDiv.querySelectorAll('.team-name');
                 const targetSlot = isFirstTeam ? teamSlots[0] : teamSlots[1];
                 
-                // Update the team name with animation
-                setTimeout(() => {
-                    targetSlot.textContent = winnerText;
-                    targetSlot.classList.add('advancing');
-                    
-                    // Update hashes immediately after updating the team name
-                    updateMerkleTree();
-                    
-                    // Remove animations after they complete
-                    setTimeout(() => {
-                        winner.classList.remove('advancing');
-                        targetSlot.classList.remove('advancing');
-                        if (line) line.classList.remove('advancing');
-                    }, 500);
-                }, 250);
+                // Update the team name
+                targetSlot.textContent = winnerText;
+                
+                // Update hashes immediately after updating the team name
+                updateMerkleTree();
             }
 
             // Update hashes
@@ -547,14 +452,9 @@
                 const isFirstTeam = matchIndex % 2 === 0;
                 const targetSlot = isFirstTeam ? teamSlots[0] : teamSlots[1];
                 
-                // Animate the clearing
-                targetSlot.classList.add('advancing');
-                setTimeout(() => {
-                    targetSlot.textContent = '-';
-                    targetSlot.classList.remove('advancing');
-                    // Update hashes immediately after clearing the team name
-                    updateMerkleTree();
-                }, 250);
+                targetSlot.textContent = '-';
+                // Update hashes immediately after clearing the team name
+                updateMerkleTree();
             }
 
             // Update hashes
@@ -564,7 +464,7 @@
         // Add visual connections between matches
         function addBracketLines() {
             const rounds = document.querySelectorAll('.round');
-            const container = document.getElementById('bracket-container');
+            const container = document.getElementById('bracketContainer');
             
             // Clear existing lines
             document.querySelectorAll('.bracket-line').forEach(line => line.remove());
@@ -615,7 +515,7 @@
 
         // Generate bracket structure
         function generateBracket() {
-            const container = document.getElementById('bracket-container');
+            const container = document.getElementById('bracketContainer');
             const rounds = Math.log2(teams.length);
             
             for (let round = 0; round < rounds; round++) {
@@ -628,17 +528,6 @@
                     matchDiv.className = 'match';
                     matchDiv.dataset.round = round;
                     matchDiv.dataset.match = match;
-                    
-                    // Add lock button
-                    const lockButton = document.createElement('button');
-                    lockButton.className = 'lock-button';
-                    lockButton.innerHTML = '🔒';
-                    lockButton.title = 'Lock this match';
-                    lockButton.onclick = (e) => {
-                        e.stopPropagation();
-                        toggleLock(matchDiv);
-                    };
-                    matchDiv.appendChild(lockButton);
                     
                     if (round === 0) {
                         // First round - show actual teams without hashes
@@ -737,32 +626,30 @@
         document.getElementById('hash-input-1').addEventListener('input', updateHashCalculator);
         document.getElementById('hash-input-2').addEventListener('input', updateHashCalculator);
 
-        // Toggle lock state for a match
-        function toggleLock(matchDiv) {
-            const lockButton = matchDiv.querySelector('.lock-button');
-            const isLocked = matchDiv.classList.toggle('locked');
-            
-            if (isLocked) {
-                lockButton.innerHTML = '🔒';
-                lockButton.title = 'Unlock this match';
-                // Store the current state
-                const teams = matchDiv.querySelectorAll('.team-name');
-                matchDiv.dataset.lockedTeams = JSON.stringify([teams[0].textContent, teams[1].textContent]);
-            } else {
-                lockButton.innerHTML = '🔓';
-                lockButton.title = 'Lock this match';
-                delete matchDiv.dataset.lockedTeams;
-            }
-        }
-
-        // Check if a match is locked
-        function isMatchLocked(matchDiv) {
-            return matchDiv.classList.contains('locked');
+        // Function to randomly select winners
+        function randomlySelectWinners() {
+            const matches = document.querySelectorAll('.match');
+            matches.forEach(match => {
+                const teams = match.querySelectorAll('.team-name');
+                const randomIndex = Math.floor(Math.random() * 2);
+                teams[randomIndex].classList.add('winner');
+                propagateWinner(match, 
+                    parseInt(match.dataset.round), 
+                    parseInt(match.dataset.match));
+            });
         }
 
         // Initialize the bracket
         generateBracket();
-        updateMerkleTree();
+        
+        // Wait for bracket lines to be added before selecting winners
+        setTimeout(() => {
+            addBracketLines();
+            // Now select random winners
+            randomlySelectWinners();
+            // Update hashes after all winners are selected
+            updateMerkleTree();
+        }, 500); // Increased timeout to ensure everything is ready
     </script>
 </body>
 </html> 
