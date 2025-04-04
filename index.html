@@ -274,7 +274,7 @@
                         match.dataset.winner = winnerName;
                         match.dataset.hashColor = hashToColor(hashValue);
                     } else {
-                        // For all other levels, use previous hashes and winner
+                        // For intermediate nodes, use previous hashes and winner
                         const leftMatch = document.querySelector(`.match[data-round="${i-1}"][data-match="${match.dataset.match * 2}"]`);
                         const rightMatch = document.querySelector(`.match[data-round="${i-1}"][data-match="${match.dataset.match * 2 + 1}"]`);
                         
@@ -296,26 +296,28 @@
                                 match.dataset.hashColor = previousMatch.dataset.hashColor;
                             }
                         }
-                        
-                        // Update display
-                        const hashElement = match.querySelector('.merkle-hash');
-                        if (!hashElement) {
-                            const newHashElement = document.createElement('div');
-                            newHashElement.className = 'merkle-hash';
-                            match.appendChild(newHashElement);
-                        }
-                        const hashElementToUpdate = match.querySelector('.merkle-hash');
-                        
-                        // Create colored input text
-                        const leftColor = leftMatch ? leftMatch.dataset.hashColor : '#666';
-                        const rightColor = rightMatch ? rightMatch.dataset.hashColor : '#666';
-                        
-                        hashElementToUpdate.innerHTML = `
-                            <div>Hash: <span style="color: ${match.dataset.hashColor || '#666'}">${hashValue}</span></div>
-                            <div class="hash-details">Input: "<span style="color: ${leftColor}">${leftHash}</span><span style="color: ${rightColor}">${rightHash}</span>${winnerName}"</div>
-                        `;
-                        hashElementToUpdate.classList.add('visible');
                     }
+                    
+                    // Update display
+                    const hashElement = match.querySelector('.merkle-hash');
+                    if (!hashElement) {
+                        const newHashElement = document.createElement('div');
+                        newHashElement.className = 'merkle-hash';
+                        match.appendChild(newHashElement);
+                    }
+                    const hashElementToUpdate = match.querySelector('.merkle-hash');
+                    
+                    // Create colored input text
+                    const leftMatch = document.querySelector(`.match[data-round="${i-1}"][data-match="${match.dataset.match * 2}"]`);
+                    const rightMatch = document.querySelector(`.match[data-round="${i-1}"][data-match="${match.dataset.match * 2 + 1}"]`);
+                    const leftColor = leftMatch ? leftMatch.dataset.hashColor : '#666';
+                    const rightColor = rightMatch ? rightMatch.dataset.hashColor : '#666';
+                    
+                    hashElementToUpdate.innerHTML = `
+                        <div>Hash: <span style="color: ${match.dataset.hashColor || '#666'}">${match.dataset.merkleHash}</span></div>
+                        <div class="hash-details">Input: "<span style="color: ${leftColor}">${leftMatch ? leftMatch.dataset.merkleHash : '--'}</span><span style="color: ${rightColor}">${rightMatch ? rightMatch.dataset.merkleHash : '--'}</span>${match.dataset.winner}"</div>
+                    `;
+                    hashElementToUpdate.classList.add('visible');
                 });
             }
             
@@ -356,8 +358,8 @@
         function propagateWinner(matchDiv, round, matchIndex) {
             const winner = matchDiv.querySelector('.winner');
             if (!winner) {
-                // If no winner is selected, clear the next round only
-                clearNextRound(round, matchIndex);
+                // If no winner is selected, clear all upstream rounds
+                clearUpstreamRounds(round, matchIndex);
                 return;
             }
 
@@ -378,14 +380,17 @@
                 
                 // Update hashes immediately after updating the team name
                 updateMerkleTree();
+                
+                // Recursively propagate to the next round
+                propagateWinner(nextMatchDiv, nextRound, nextMatch);
+                
+                // Update bracket lines after all changes
+                setTimeout(addBracketLines, 0);
             }
-
-            // Update hashes
-            updateMerkleTree();
         }
 
-        // Clear the next round when a winner is deselected
-        function clearNextRound(round, matchIndex) {
+        // Clear all upstream rounds when a winner is deselected
+        function clearUpstreamRounds(round, matchIndex) {
             const nextRound = round + 1;
             const nextMatch = Math.floor(matchIndex / 2);
             
@@ -396,12 +401,16 @@
                 const targetSlot = isFirstTeam ? teamSlots[0] : teamSlots[1];
                 
                 targetSlot.textContent = '-';
+                
                 // Update hashes immediately after clearing the team name
                 updateMerkleTree();
+                
+                // Recursively clear upstream rounds
+                clearUpstreamRounds(nextRound, nextMatch);
+                
+                // Update bracket lines after all changes
+                setTimeout(addBracketLines, 0);
             }
-
-            // Update hashes
-            updateMerkleTree();
         }
 
         // Add visual connections between matches
@@ -509,6 +518,7 @@
         function highlightPath(matchDiv) {
             const round = parseInt(matchDiv.dataset.round);
             const match = parseInt(matchDiv.dataset.match);
+            const totalRounds = Math.log2(teams.length);
             
             // Highlight current match
             matchDiv.classList.add('match-path');
@@ -517,7 +527,7 @@
             let currentRound = round;
             let currentMatch = match;
             
-            while (currentRound < rounds.length - 1) {
+            while (currentRound < totalRounds - 1) {
                 const nextRound = currentRound + 1;
                 const nextMatch = Math.floor(currentMatch / 2);
                 
@@ -580,6 +590,9 @@
                     parseInt(match.dataset.round), 
                     parseInt(match.dataset.match));
             });
+            
+            // Update bracket lines after all winners are selected
+            setTimeout(addBracketLines, 0);
         }
 
         // Initialize the bracket
@@ -587,12 +600,15 @@
         
         // Wait for bracket lines to be added before selecting winners
         setTimeout(() => {
+            // First add initial bracket lines
             addBracketLines();
-            // Now select random winners
+            
+            // Then select random winners
             randomlySelectWinners();
+            
             // Update hashes after all winners are selected
             updateMerkleTree();
-        }, 500); // Increased timeout to ensure everything is ready
+        }, 500); // Initial timeout to ensure DOM is ready
     </script>
 </body>
 </html> 
